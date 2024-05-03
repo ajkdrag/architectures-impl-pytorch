@@ -1,0 +1,30 @@
+[project]
+name = "architectures-impl-pytorch"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "ajkdrag", email = "altamashjahangirkhan123@gmail.com"},
+]
+dependencies = [
+    "torch>=2.3.0",
+    "matplotlib>=3.8.4",
+    "jupyter>=1.0.0",
+    "pydantic>=2.7.1",
+    "structlog>=24.1.0",
+    "opencv-python>=4.9.0.80",
+]
+requires-python = "==3.9.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.scripts]
+nb = "jupyter-lab --no-browser --ip=0.0.0.0 --port=8888 --NotebookApp.token=''"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "-e file:///${PROJECT_ROOT}/yolov1#egg=yolov1",
+]

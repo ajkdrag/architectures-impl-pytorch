@@ -1,0 +1,16 @@
+data:
+  root: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/.data"
+  train: train
+  val: valid
+  nc: 5
+  names: ['Ambulance', 'Bus', 'Car', 'Motorcycle', 'Truck']
+
+training:
+  batch_size: 8
+  num_workers: 4
+  learning_rate: 0.001
+  epochs: 50
+
+model:
+  backbone: resnet18
+  pretrained: true
