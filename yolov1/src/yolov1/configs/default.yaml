@@ -2,7 +2,6 @@ data:
   root: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/.data"
   train: train
   val: valid
-  nc: 5
   names: ['Ambulance', 'Bus', 'Car', 'Motorcycle', 'Truck']
 
 training:
@@ -14,3 +13,9 @@ training:
 model:
   backbone: resnet18
   pretrained: true
+  backbone_output_channels: 512
+  detector_hidden_sz: 1024
+  input_size: [224, 224]
+  S: 7
+  B: 1
+  nc: 5

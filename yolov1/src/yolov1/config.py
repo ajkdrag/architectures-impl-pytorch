@@ -8,7 +8,6 @@ class DataConfig(BaseModel):
     root: str
     train: str
     val: str
-    nc: int
     names: List[str]
 
 
@@ -22,6 +21,12 @@ class TrainingConfig(BaseModel):
 class ModelConfig(BaseModel):
     backbone: str
     pretrained: bool
+    backbone_output_channels: int
+    detector_hidden_sz: int
+    input_size: tuple
+    S: int
+    B: int
+    nc: int
 
 
 class YOLOConfig(BaseModel):
