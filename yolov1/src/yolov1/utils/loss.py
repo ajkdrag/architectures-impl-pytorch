@@ -15,12 +15,6 @@ class SimplifiedYOLOLoss(nn.Module):
         self.lambda_noobj = lambda_noobj
 
     def forward(self, predictions, targets):
-        S = targets.size(1)
-        B = 1
-        C = self.num_classes
-
-        predictions = predictions.reshape(-1, S, S, B * 5 + C)
-
         # Extract predicted bounding box coordinates and confidence
         pred_boxes = predictions[..., :4]
         pred_conf = predictions[..., 4].unsqueeze(-1)

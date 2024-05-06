@@ -34,3 +34,38 @@ def encode_labels(labels, S, B, C):
         encoded_labels[i, j, 5 + class_label] = 1
 
     return encoded_labels
+
+
+def decode_labels(encoded_labels, S, B, C):
+    boxes = []
+
+    for i in range(S):
+        for j in range(S):
+            cell_output = encoded_labels[i, j]
+            bbox = cell_output[:4]
+            conf = cell_output[4]
+            class_probs = cell_output[5:]
+
+            x_cell, y_cell, w_cell, h_cell = bbox
+            x = (j + x_cell) / S
+            y = (i + y_cell) / S
+            w = w_cell
+            h = h_cell
+
+            class_idx = torch.argmax(class_probs)
+            class_prob = class_probs[class_idx]
+
+            box = [
+                class_idx.item(),
+                x,
+                y,
+                w,
+                h,
+                conf,
+                class_prob.item(),
+            ]
+            boxes.append(box)
+
+    return boxes
+
+

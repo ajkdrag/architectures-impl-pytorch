@@ -1,14 +1,8 @@
 data:
   root: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/.data"
-  train: train
+  train: valid
   val: valid
   names: ['Ambulance', 'Bus', 'Car', 'Motorcycle', 'Truck']
-
-training:
-  batch_size: 8
-  num_workers: 4
-  learning_rate: 0.001
-  epochs: 50
 
 model:
   backbone: resnet18
@@ -19,3 +13,16 @@ model:
   S: 7
   B: 1
   nc: 5
+  conf_th: 0.0
+
+training:
+  batch_size: 8
+  num_workers: 4
+  learning_rate: 0.001
+  epochs: 50
+  checkpoints_dir: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints"
+
+inference:
+  batch_size: 2
+  source: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/.data/valid/images"
+  checkpoint: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints/final_epoch_50.pt"

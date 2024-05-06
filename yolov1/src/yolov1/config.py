@@ -16,6 +16,13 @@ class TrainingConfig(BaseModel):
     num_workers: int
     learning_rate: float
     epochs: int
+    checkpoints_dir: str
+
+
+class InferenceConfig(BaseModel):
+    batch_size: int
+    checkpoint: str
+    source: str
 
 
 class ModelConfig(BaseModel):
@@ -24,6 +31,7 @@ class ModelConfig(BaseModel):
     backbone_output_channels: int
     detector_hidden_sz: int
     input_size: tuple
+    conf_th: float
     S: int
     B: int
     nc: int
@@ -32,6 +40,7 @@ class ModelConfig(BaseModel):
 class YOLOConfig(BaseModel):
     data: DataConfig
     training: TrainingConfig
+    inference: InferenceConfig
     model: ModelConfig
 
 

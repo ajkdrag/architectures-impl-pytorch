@@ -2,9 +2,9 @@ import structlog
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from pathlib import Path
 from yolov1.config import YOLOConfig
-from yolov1.data.dataset import YOLODataset
+from yolov1.data.utils import get_dls
 from yolov1.models.arch import YOLOv1
 from yolov1.utils.loss import SimplifiedYOLOLoss
 
@@ -36,37 +36,29 @@ def train(
     return running_loss / len(dataloader)
 
 
-def _get_dls(config: YOLOConfig, mode="train"):
-    dataset = YOLODataset(config, mode=mode)
-    dataloader = DataLoader(
-        dataset,
-        batch_size=config.training.batch_size,
-        num_workers=config.training.num_workers,
-        shuffle=True if mode == "train" else False,
-    )
-    return dataloader
-
-
 def main(config: YOLOConfig):
     cfg_train = config.training
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    train_dl = _get_dls(config)
+    train_dl = get_dls(config, mode="train")
     model = YOLOv1(config.model).to(device)
+    log.info("Loaded model successfully")
 
     criterion = SimplifiedYOLOLoss(config.model.nc)
     optimizer = optim.Adam(model.parameters(), lr=cfg_train.learning_rate)
 
     for epoch in range(cfg_train.epochs):
         train_loss = train(model, train_dl, optimizer, criterion, device)
-        log.info(
-            f"Epoch [{epoch+1}/{cfg_train.epochs}], Train Loss: {train_loss:.4f}")
+        log.info(f"Epoch [{epoch+1}/{cfg_train.epochs}], Train Loss: {train_loss:.4f}")
 
         checkpoint = {
             "epoch": epoch,
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
         }
-        torch.save(checkpoint, f"checkpoints/epoch_{epoch+1}.pt")
+        Path(cfg_train.checkpoints_dir).mkdir(parents=True, exist_ok=True)
+        checkpoint_file = f"epoch_{epoch+1}.pt"
+        if epoch == cfg_train.epochs - 1:
+            checkpoint_file = f"final_{checkpoint_file}"
 
-    torch.save(model.state_dict(), "models/yolov1_final.pt")
+        torch.save(checkpoint, f"{cfg_train.checkpoints_dir}/{checkpoint_file}")

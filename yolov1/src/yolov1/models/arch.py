@@ -33,6 +33,7 @@ class YOLOv1(nn.Module):
             nn.Linear(output_channels * S * S, detector_hidden_sz),
             nn.LeakyReLU(0.1),
             nn.Linear(detector_hidden_sz, S * S * (B * 5 + C)),
+            nn.Unflatten(1, (S, S, B * 5 + C)),
         )
 
     def forward(self, x):

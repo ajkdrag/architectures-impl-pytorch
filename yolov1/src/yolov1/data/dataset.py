@@ -4,7 +4,11 @@ from typing import List
 import structlog
 import torch
 from PIL import Image
-from yolov1.config import DataConfig, ModelConfig, YOLOConfig
+from yolov1.config import (
+    DataConfig,
+    ModelConfig,
+    YOLOConfig,
+)
 from yolov1.utils.io import get_all_files
 from yolov1.utils.general import encode_labels
 from torchvision import transforms
@@ -13,8 +17,7 @@ log = structlog.get_logger()
 
 
 class YOLODataset(torch.utils.data.Dataset):
-    data_config: DataConfig
-    model_config: ModelConfig
+    config: YOLOConfig
     transforms: any
     mode: str
     image_files: List[Path]
@@ -28,8 +31,7 @@ class YOLODataset(torch.utils.data.Dataset):
         mode="train",
         encode=True,
     ):
-        self.data_config = config.data
-        self.model_config = config.model
+        self.config = config
         self.transforms = transforms
         self.mode = mode
         self.encode = encode
@@ -42,7 +44,7 @@ class YOLODataset(torch.utils.data.Dataset):
     def use_default_transforms(self):
         self.transforms = transforms.Compose(
             [
-                transforms.Resize(self.model_config.input_size),
+                transforms.Resize(self.config.model.input_size),
                 transforms.ToTensor(),
                 transforms.Normalize(
                     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
@@ -52,9 +54,9 @@ class YOLODataset(torch.utils.data.Dataset):
 
     def get_data(self):
         subdir = (
-            self.data_config.train if self.mode == "train" else self.data_config.val
+            self.config.data.train if self.mode == "train" else self.data_config.val
         )
-        path_data = Path(self.data_config.root).joinpath(subdir)
+        path_data = Path(self.config.data.root).joinpath(subdir)
         self.image_files = sorted(get_all_files(path_data.joinpath("images")))
         self.label_files = sorted(
             get_all_files(
@@ -87,9 +89,34 @@ class YOLODataset(torch.utils.data.Dataset):
         if self.encode:
             labels = encode_labels(
                 labels,
-                S=self.model_config.S,
-                C=len(self.data_config.names),
-                B=self.model_config.B,
+                S=self.config.model.S,
+                C=self.config.model.nc,
+                B=self.config.model.B,
             )
 
         return image, labels
+
+
+class InferenceDataset(YOLODataset):
+    def __init__(
+        self,
+        config: YOLOConfig,
+        transforms=None,
+    ):
+        super().__init__(config, transforms)
+
+    def __getitem__(self, index):
+        image_path = self.image_files[index]
+        image = Image.open(image_path).convert("RGB")
+        if self.transforms:
+            image = self.transforms(image)
+        return image
+
+    def get_data(self):
+        source = self.config.inference.source
+        if Path(source).is_file():
+            self.image_files = [Path(source)]
+        elif Path(source).is_dir():
+            self.image_files = get_all_files(Path(source))
+        else:
+            raise ValueError(f"{source} is not a file or a dir")

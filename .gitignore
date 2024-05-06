@@ -44,3 +44,4 @@ nodeLanguageServer/**
 nodeLanguageServer.*/**
 dist/**
 .data/
+checkpoints/
