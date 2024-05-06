@@ -13,8 +13,9 @@ from yolov1.data.augmentations import (
     create_augmentation_pipeline,
     create_transforms,
 )
-from yolov1.utils.general import encode_labels 
+from yolov1.utils.general import encode_labels
 from yolov1.utils.io import get_all_files
+from torchvision.transforms.functional import pil_to_tensor
 
 log = structlog.get_logger()
 
@@ -70,7 +71,7 @@ class YOLODataset(torch.utils.data.Dataset):
         image_path = self.image_files[index]
         label_path = self.label_files[index]
 
-        image = np.array(Image.open(image_path).convert("RGB"))
+        image = np.array(Image.open(image_path).convert("RGB"), dtype=np.float32)
         with open(label_path, "r") as f:
             labels = f.read().strip().split("\n")
             labels = [list(map(float, label.split())) for label in labels]
@@ -85,6 +86,7 @@ class YOLODataset(torch.utils.data.Dataset):
                 bboxes,
                 class_labels,
             )
+
         image, bboxes, class_labels = apply_pipeline(
             self.transforms,
             image,
@@ -95,7 +97,7 @@ class YOLODataset(torch.utils.data.Dataset):
         transformed_labels = torch.cat([class_labels, bboxes], dim=1)
 
         if self.encode:
-            labels = encode_labels(
+            transformed_labels = encode_labels(
                 transformed_labels,
                 S=self.config.model.S,
                 C=self.config.model.nc,
@@ -114,7 +116,7 @@ class InferenceDataset(YOLODataset):
 
     def __getitem__(self, index):
         image_path = self.image_files[index]
-        image = np.array(Image.open(image_path).convert("RGB"))
+        image = np.array(Image.open(image_path).convert("RGB"), dtype=np.float32)
         return apply_pipeline(
             self.transforms,
             image,
