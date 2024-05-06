@@ -9,17 +9,17 @@ model:
   pretrained: true
   backbone_output_channels: 512
   detector_hidden_sz: 1024
-  input_size: [224, 224]
+  input_size: [448, 448]
   S: 7
   B: 1
   nc: 5
   conf_th: 0.0
 
 training:
-  batch_size: 8
+  batch_size: 4
   num_workers: 4
   learning_rate: 0.001
-  epochs: 50
+  epochs: 2
   checkpoints_dir: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints"
   save_freq: 10
 

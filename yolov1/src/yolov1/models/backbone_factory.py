@@ -17,8 +17,12 @@ class BackboneFactory:
     @classmethod
     def create_backbone(cls, name: str, output_channels: int, **kwargs):
         backbone = cls.registry[name](**kwargs)
-        # Add additional convolutional layers to match the desired output channels
         num_channels = backbone.num_features
+
+        # Add adaptive average pooling layer
+        backbone = nn.Sequential(backbone, nn.AdaptiveAvgPool2d((7, 7)))
+
+        # Add additional convolutional layers to match the desired output channels
         if num_channels != output_channels:
             additional_layers = nn.Sequential(
                 nn.Conv2d(
