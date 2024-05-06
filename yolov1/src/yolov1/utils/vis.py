@@ -4,24 +4,22 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from PIL import Image
 from yolov1.utils.general import ncxcywh2xyxy
 
 
 def draw_boxes(
-    img: Image.Image,
+    img: torch.Tensor,
     labels: torch.Tensor,
     color: Tuple[int, int, int] = (255, 0, 0),
     show_class: bool = True,
     show_conf: bool = True,
     display: bool = True,
 ):
-    canvas = np.array(img)
+    canvas = img.numpy()
     black, white = (0, 0, 0), (255, 255, 255)
     text_color = white if np.mean(color) < 128 else black
     class_ids = labels[:, 0].to(torch.int32)
     class_names = map(str, class_ids.tolist())
-    print(labels)
     boxes = ncxcywh2xyxy(labels[:, 1:], *img.size)
 
     for box, class_name in zip(boxes, class_names):

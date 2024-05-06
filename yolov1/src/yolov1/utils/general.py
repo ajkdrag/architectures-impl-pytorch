@@ -1,7 +1,7 @@
 import torch
 
 
-def ncxcywh2xyxy(tensor: torch.Tensor, width: int, height: int):
+def ncxcywh2xyxy(tensor, width: int, height: int):
     """Convert normalized cxcywh tensor to xyxy tensor."""
     tensor_ = tensor.clone()
     tensor_[:, 0] *= width
@@ -39,7 +39,7 @@ def encode_labels(labels, S, B, C):
 
 
 def decode_labels(encoded_labels, S, B, C):
-    boxes = []
+    labels = []
 
     for i in range(S):
         for j in range(S):
@@ -53,19 +53,22 @@ def decode_labels(encoded_labels, S, B, C):
             y = (i + y_cell) / S
             w = w_cell
             h = h_cell
+            cx, cy = x + w * 0.5, y + h * 0.5
 
             class_idx = torch.argmax(class_probs)
             class_prob = class_probs[class_idx]
 
-            box = [
-                class_idx.item(),
-                x,
-                y,
-                w,
-                h,
-                conf,
-                class_prob.item(),
-            ]
-            boxes.append(box)
+            box = torch.tensor(
+                [
+                    class_idx.item(),
+                    cx,
+                    cy,
+                    w,
+                    h,
+                    conf,
+                    class_prob.item(),
+                ]
+            )
+            labels.append(box)
 
-    return boxes
+    return labels
