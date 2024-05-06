@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from PIL import Image
-from yolov1.utils.general import nxywh2xyxy
+from yolov1.utils.general import ncxcywh2xyxy
 
 
 def draw_boxes(
@@ -21,7 +21,8 @@ def draw_boxes(
     text_color = white if np.mean(color) < 128 else black
     class_ids = labels[:, 0].to(torch.int32)
     class_names = map(str, class_ids.tolist())
-    boxes = nxywh2xyxy(labels[:, 1:], *img.size)
+    print(labels)
+    boxes = ncxcywh2xyxy(labels[:, 1:], *img.size)
 
     for box, class_name in zip(boxes, class_names):
         box_label = []

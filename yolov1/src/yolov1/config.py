@@ -1,7 +1,17 @@
-from typing import List
+from typing import List, Tuple
 
 import yaml
 from pydantic import BaseModel
+
+
+class AugmentationsConfig(BaseModel):
+    horizontal_flip: float
+    vertical_flip: float
+    rotate: float
+    brightness_contrast: float
+    shift_scale_rotate: float
+    random_crop: float
+    random_crop_dims: Tuple[float, float]
 
 
 class DataConfig(BaseModel):
@@ -9,6 +19,7 @@ class DataConfig(BaseModel):
     train: str
     val: str
     names: List[str]
+    augmentations: AugmentationsConfig
 
 
 class TrainingConfig(BaseModel):
