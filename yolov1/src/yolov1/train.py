@@ -47,9 +47,13 @@ def main(config: YOLOConfig):
     criterion = SimplifiedYOLOLoss(config.model.nc)
     optimizer = optim.Adam(model.parameters(), lr=cfg_train.learning_rate)
 
+    save_freq = cfg_train.save_freq
+    last_epoch = cfg_train.epochs - 1
+
     for epoch in range(cfg_train.epochs):
         train_loss = train(model, train_dl, optimizer, criterion, device)
-        log.info(f"Epoch [{epoch+1}/{cfg_train.epochs}], Train Loss: {train_loss:.4f}")
+        log.info(
+            f"Epoch [{epoch+1}/{cfg_train.epochs}], Train Loss: {train_loss:.4f}")
 
         checkpoint = {
             "epoch": epoch,
@@ -58,7 +62,9 @@ def main(config: YOLOConfig):
         }
         Path(cfg_train.checkpoints_dir).mkdir(parents=True, exist_ok=True)
         checkpoint_file = f"epoch_{epoch+1}.pt"
-        if epoch == cfg_train.epochs - 1:
+        if epoch == last_epoch:
             checkpoint_file = f"final_{checkpoint_file}"
 
-        torch.save(checkpoint, f"{cfg_train.checkpoints_dir}/{checkpoint_file}")
+        if (epoch % save_freq == 0) or epoch == last_epoch:
+            torch.save(
+                checkpoint, f"{cfg_train.checkpoints_dir}/{checkpoint_file}")

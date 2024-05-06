@@ -17,6 +17,7 @@ class TrainingConfig(BaseModel):
     learning_rate: float
     epochs: int
     checkpoints_dir: str
+    save_freq: int
 
 
 class InferenceConfig(BaseModel):
