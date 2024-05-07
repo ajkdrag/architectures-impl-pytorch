@@ -6,7 +6,8 @@ from pathlib import Path
 from yolov1.config import YOLOConfig
 from yolov1.data.utils import get_dls
 from yolov1.models.arch import YOLOv1
-from yolov1.utils.loss import SimplifiedYOLOLoss
+from yolov1.utils.loss import SimplifiedYOLOLossV2
+from typing import Dict
 
 log = structlog.get_logger()
 
@@ -17,23 +18,39 @@ def train(
     optimizer: torch.optim.Optimizer,
     criterion: nn.Module,
     device: str = "cpu",
-) -> None:
+) -> Dict[str, float]:
     model.train()
-    running_loss = 0.0
+    running_losses = {
+        "total": 0.0,
+        "coord": 0.0,
+        "obj": 0.0,
+        "class": 0.0,
+        "noobj": 0.0,
+    }
 
     for images, labels in dataloader:
         images = images.to(device)
         labels = labels.to(device)
 
         optimizer.zero_grad()
+
         outputs = model(images)
-        loss = criterion(outputs, labels)
+
+        loss, coord_loss, obj_loss, class_loss, noobj_loss = criterion(
+            outputs, labels)
+
         loss.backward()
         optimizer.step()
 
-        running_loss += loss.item()
+        running_losses["total"] += loss.item()
+        running_losses["coord"] += coord_loss.item()
+        running_losses["obj"] += obj_loss.item()
+        running_losses["class"] += class_loss.item()
+        running_losses["noobj"] += noobj_loss.item()
 
-    return running_loss / len(dataloader)
+    epoch_losses = {k: v / len(dataloader) for k, v in running_losses.items()}
+
+    return epoch_losses
 
 
 def main(config: YOLOConfig):
@@ -44,16 +61,16 @@ def main(config: YOLOConfig):
     model = YOLOv1(config.model).to(device)
     log.info("Loaded model successfully")
 
-    criterion = SimplifiedYOLOLoss(config.model.nc)
+    criterion = SimplifiedYOLOLossV2(config.model.nc)
     optimizer = optim.Adam(model.parameters(), lr=cfg_train.learning_rate)
 
     save_freq = cfg_train.save_freq
     last_epoch = cfg_train.epochs - 1
 
     for epoch in range(cfg_train.epochs):
-        train_loss = train(model, train_dl, optimizer, criterion, device)
+        epoch_loss = train(model, train_dl, optimizer, criterion, device)
         log.info(
-            f"Epoch [{epoch+1}/{cfg_train.epochs}], Train Loss: {train_loss:.4f}")
+            f"Epoch [{epoch+1}/{cfg_train.epochs}], Train Loss: {epoch_loss}")
 
         checkpoint = {
             "epoch": epoch,
