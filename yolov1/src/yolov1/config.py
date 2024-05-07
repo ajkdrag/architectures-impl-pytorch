@@ -1,16 +1,15 @@
-from typing import List, Tuple
+from typing import Optional, List, Tuple
 
 import yaml
 from pydantic import BaseModel
 
 
 class AugmentationsConfig(BaseModel):
-    horizontal_flip: float
-    vertical_flip: float
-    rotate: float
-    brightness_contrast: float
-    shift_scale_rotate: float
-    random_crop: float
+    horizontal_flip: Optional[float] = 0.5
+    vertical_flip: Optional[float] = 0.0
+    brightness_contrast: Optional[float] = 0.8
+    shift_scale_rotate: Optional[float] = 0.0
+    random_crop: Optional[float] = 0.6
     random_crop_dims: Tuple[float, float]
 
 

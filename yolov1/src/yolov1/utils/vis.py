@@ -1,13 +1,15 @@
 from typing import Tuple
+from PIL import Image
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from torchvision.transforms.functional import to_pil_image
 from yolov1.utils.general import ncxcywh2xyxy
 
 
-def draw_boxes(
+def draw_boxes_tensor(
     img: torch.Tensor,
     labels: torch.Tensor,
     color: Tuple[int, int, int] = (255, 0, 0),
@@ -15,7 +17,46 @@ def draw_boxes(
     show_conf: bool = True,
     display: bool = True,
 ):
-    canvas = img.numpy()
+    std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
+    mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+
+    return draw_boxes_pil(
+        to_pil_image(img * std + mean),
+        labels,
+        color,
+        show_class,
+        show_conf,
+        display,
+    )
+
+
+def draw_boxes_numpy(
+    img: np.ndarray,
+    labels: torch.Tensor,
+    color: Tuple[int, int, int] = (255, 0, 0),
+    show_class: bool = True,
+    show_conf: bool = True,
+    display: bool = True,
+):
+    return draw_boxes_pil(
+        Image.fromarray(img),
+        labels,
+        color,
+        show_class,
+        show_conf,
+        display,
+    )
+
+
+def draw_boxes_pil(
+    img: Image.Image,
+    labels: torch.Tensor,
+    color: Tuple[int, int, int] = (255, 0, 0),
+    show_class: bool = True,
+    show_conf: bool = True,
+    display: bool = True,
+):
+    canvas = np.array(img)
     black, white = (0, 0, 0), (255, 255, 255)
     text_color = white if np.mean(color) < 128 else black
     class_ids = labels[:, 0].to(torch.int32)

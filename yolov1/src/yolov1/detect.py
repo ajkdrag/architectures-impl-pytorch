@@ -7,7 +7,7 @@ from yolov1.config import YOLOConfig
 from yolov1.data.utils import get_dls_for_inference
 from yolov1.models.arch import YOLOv1
 from yolov1.utils.general import decode_labels
-from yolov1.utils.vis import draw_boxes
+from yolov1.utils.vis import draw_boxes_tensor
 
 log = structlog.get_logger()
 
@@ -24,16 +24,12 @@ def infer(
 
     S, B, C = config.model.S, config.model.B, config.model.nc
 
-    mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
-    std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
-
     with torch.no_grad():
         for images in dataloader:
             images = images.to(device)
             encoded_outputs = model(images)
             decoded_outputs = [decode_labels(o, S, B, C)
                                for o in encoded_outputs]
-            decoded_images = images * std + mean
 
             results = {
                 "decoded_outputs": decoded_outputs,
@@ -41,9 +37,13 @@ def infer(
             }
 
             if draw:
-                for image in decoded_images:
+                for image, output in zip(images, decoded_outputs):
                     results["drawn"].append(
-                        draw_boxes(image, decoded_outputs),
+                        draw_boxes_tensor(
+                            image,
+                            output,
+                            display=False,
+                        ),
                     )
             yield results
 

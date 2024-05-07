@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 
+import cv2
 import numpy as np
 import structlog
 import torch
@@ -15,7 +16,6 @@ from yolov1.data.augmentations import (
 )
 from yolov1.utils.general import encode_labels
 from yolov1.utils.io import get_all_files
-from torchvision.transforms.functional import pil_to_tensor
 
 log = structlog.get_logger()
 
@@ -28,16 +28,19 @@ class YOLODataset(torch.utils.data.Dataset):
     image_files: List[Path]
     label_files: List[Path]
     encode: bool
+    apply_aug: bool
 
     def __init__(
         self,
         config: YOLOConfig,
         mode="train",
         encode=True,
+        apply_aug=True,
     ):
         self.config = config
         self.mode = mode
         self.encode = encode
+        self.apply_aug = apply_aug
         self.transforms = create_transforms(config)
         self.augmentations = (
             create_augmentation_pipeline(config) if mode == "train" else None
@@ -71,34 +74,36 @@ class YOLODataset(torch.utils.data.Dataset):
         image_path = self.image_files[index]
         label_path = self.label_files[index]
 
-        image = np.array(Image.open(image_path).convert("RGB"), dtype=np.float32)
+        image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
+
         with open(label_path, "r") as f:
             labels = f.read().strip().split("\n")
             labels = [list(map(float, label.split())) for label in labels]
             labels = torch.tensor(labels)
 
-        bboxes, class_labels = labels[:, 1:], labels[:, 0]
+        boxes, class_labels = labels[:, 1:], labels[:, 0]
 
-        if self.augmentations:
-            image, bboxes, class_labels = apply_pipeline(
+        if self.apply_aug and self.augmentations:
+            image, boxes, class_labels = apply_pipeline(
                 self.augmentations,
                 image,
-                bboxes,
+                boxes,
                 class_labels,
             )
 
-        image, bboxes, class_labels = apply_pipeline(
-            self.transforms,
-            image,
-            bboxes,
-            class_labels,
-        )
-
-        transformed_labels = torch.cat([class_labels, bboxes], dim=1)
+        transformed_labels = torch.cat(
+            [class_labels.unsqueeze(1), boxes], dim=1)
 
         if self.encode:
+            image, boxes, class_labels = apply_pipeline(
+                self.transforms,
+                image,
+                boxes,
+                class_labels,
+            )
+
             transformed_labels = encode_labels(
-                transformed_labels,
+                torch.cat([class_labels.unsqueeze(1), boxes], dim=1),
                 S=self.config.model.S,
                 C=self.config.model.nc,
                 B=self.config.model.B,
@@ -116,7 +121,8 @@ class InferenceDataset(YOLODataset):
 
     def __getitem__(self, index):
         image_path = self.image_files[index]
-        image = np.array(Image.open(image_path).convert("RGB"), dtype=np.float32)
+        image = np.array(Image.open(image_path).convert(
+            "RGB"), dtype=np.float32)
         return apply_pipeline(
             self.transforms,
             image,

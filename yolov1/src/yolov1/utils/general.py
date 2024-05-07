@@ -17,7 +17,7 @@ def ncxcywh2xyxy(tensor, width: int, height: int):
     return tensor_
 
 
-def encode_labels(labels, S, B, C):
+def encode_labels(labels: torch.Tensor, S, B, C) -> torch.Tensor:
     """SxS grid according to yolo algorithm"""
     encoded_labels = torch.zeros((S, S, B * 5 + C))
     for label in labels:
@@ -38,7 +38,7 @@ def encode_labels(labels, S, B, C):
     return encoded_labels
 
 
-def decode_labels(encoded_labels, S, B, C):
+def decode_labels(encoded_labels, S, B, C, conf_th=0.0):
     labels = []
 
     for i in range(S):
@@ -58,17 +58,18 @@ def decode_labels(encoded_labels, S, B, C):
             class_idx = torch.argmax(class_probs)
             class_prob = class_probs[class_idx]
 
-            box = torch.tensor(
-                [
-                    class_idx.item(),
-                    cx,
-                    cy,
-                    w,
-                    h,
-                    conf,
-                    class_prob.item(),
-                ]
-            )
-            labels.append(box)
+            if conf >= conf_th and class_prob > 0:
+                box = torch.tensor(
+                    [
+                        class_idx.item(),
+                        cx,
+                        cy,
+                        w,
+                        h,
+                        conf,
+                        class_prob.item(),
+                    ]
+                )
+                labels.append(box.unsqueeze(0))
 
-    return labels
+    return torch.cat(labels, dim=0)

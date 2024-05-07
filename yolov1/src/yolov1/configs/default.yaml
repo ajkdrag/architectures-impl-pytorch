@@ -4,11 +4,9 @@ data:
   val: valid
   names: ['Ambulance', 'Bus', 'Car', 'Motorcycle', 'Truck']
   augmentations:
-    horizontal_flip: 1.0
+    horizontal_flip: 0.8
     vertical_flip: 0.0
-    rotate: 0.5
     brightness_contrast: 0.8
-    shift_scale_rotate: 0.8
     random_crop: 0.8
     random_crop_dims: [224, 224]
 
@@ -24,10 +22,10 @@ model:
   conf_th: 0.0
 
 training:
-  batch_size: 4
+  batch_size: 8
   num_workers: 4
   learning_rate: 0.001
-  epochs: 2
+  epochs: 30
   checkpoints_dir: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints"
   save_freq: 10
 

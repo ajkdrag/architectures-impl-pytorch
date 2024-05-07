@@ -11,15 +11,9 @@ def create_augmentation_pipeline(config: YOLOConfig):
     if config.horizontal_flip > 0:
         pipeline.append(A.HorizontalFlip(p=config.horizontal_flip))
 
-    if config.rotate > 0:
-        pipeline.append(A.RandomRotate90(p=config.rotate))
-
     if config.brightness_contrast > 0:
         pipeline.append(A.RandomBrightnessContrast(
             p=config.brightness_contrast))
-
-    if config.shift_scale_rotate > 0:
-        pipeline.append(A.ShiftScaleRotate(p=config.shift_scale_rotate))
 
     if config.random_crop > 0:
         pipeline.append(
@@ -34,6 +28,7 @@ def create_augmentation_pipeline(config: YOLOConfig):
         bbox_params=A.BboxParams(
             format="yolo",
             label_fields=["class_labels"],
+            min_visibility=0.3,
         ),
     )
 
@@ -45,10 +40,10 @@ def create_transforms(config: YOLOConfig):
                 width=config.model.input_size[0],
                 height=config.model.input_size[1],
             ),
-            # A.Normalize(
-            #     mean=[0.485, 0.456, 0.406],
-            #     std=[0.229, 0.224, 0.225],
-            # ),
+            A.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225],
+            ),
             ToTensorV2(),
         ],
         bbox_params=A.BboxParams(
@@ -70,5 +65,5 @@ def apply_pipeline(pipeline, image, bboxes=None, class_labels=None):
     return (
         transformed["image"],
         torch.tensor(transformed["bboxes"]),
-        torch.tensor(transformed["class_labels"]).unsqueeze(1),
+        torch.tensor(transformed["class_labels"]),
     )
