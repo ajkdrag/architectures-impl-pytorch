@@ -7,6 +7,7 @@ from yolov1.config import YOLOConfig
 from yolov1.data.utils import get_dls
 from yolov1.models.arch import YOLOv1
 from yolov1.utils.loss import SimplifiedYOLOLossV2
+from yolov1.utils.general import count_parameters
 from typing import Dict
 
 log = structlog.get_logger()
@@ -36,8 +37,7 @@ def train(
 
         outputs = model(images)
 
-        loss, coord_loss, obj_loss, class_loss, noobj_loss = criterion(
-            outputs, labels)
+        loss, coord_loss, obj_loss, class_loss, noobj_loss = criterion(outputs, labels)
 
         loss.backward()
         optimizer.step()
@@ -59,7 +59,8 @@ def main(config: YOLOConfig):
 
     train_dl = get_dls(config, mode="train")
     model = YOLOv1(config.model).to(device)
-    log.info("Loaded model successfully")
+    num_params = count_parameters(model)
+    log.info(f"Loaded model successfully with {num_params} trainable params")
 
     criterion = SimplifiedYOLOLossV2(config.model.nc)
     optimizer = optim.Adam(model.parameters(), lr=cfg_train.learning_rate)
@@ -69,8 +70,7 @@ def main(config: YOLOConfig):
 
     for epoch in range(cfg_train.epochs):
         epoch_loss = train(model, train_dl, optimizer, criterion, device)
-        log.info(
-            f"Epoch [{epoch+1}/{cfg_train.epochs}], Train Loss: {epoch_loss}")
+        log.info(f"Epoch [{epoch+1}/{cfg_train.epochs}], Train Loss: {epoch_loss}")
 
         checkpoint = {
             "epoch": epoch,
@@ -83,5 +83,4 @@ def main(config: YOLOConfig):
             checkpoint_file = f"final_{checkpoint_file}"
 
         if (epoch % save_freq == 0) or epoch == last_epoch:
-            torch.save(
-                checkpoint, f"{cfg_train.checkpoints_dir}/{checkpoint_file}")
+            torch.save(checkpoint, f"{cfg_train.checkpoints_dir}/{checkpoint_file}")

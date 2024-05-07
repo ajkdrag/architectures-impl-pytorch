@@ -1,4 +1,3 @@
-import torch.nn as nn
 from typing import Dict, Type
 import timm
 
@@ -15,28 +14,8 @@ class BackboneFactory:
         return inner_wrapper
 
     @classmethod
-    def create_backbone(cls, name: str, output_channels: int, **kwargs):
-        backbone = cls.registry[name](**kwargs)
-        num_channels = backbone.num_features
-
-        # Add adaptive average pooling layer
-        backbone = nn.Sequential(backbone, nn.AdaptiveAvgPool2d((7, 7)))
-
-        # Add additional convolutional layers to match the desired output channels
-        if num_channels != output_channels:
-            additional_layers = nn.Sequential(
-                nn.Conv2d(
-                    num_channels,
-                    output_channels,
-                    kernel_size=3,
-                    padding=1,
-                ),
-                nn.BatchNorm2d(output_channels),
-                nn.LeakyReLU(0.1),
-            )
-            backbone = nn.Sequential(backbone, additional_layers)
-
-        return backbone
+    def create_backbone(cls, name: str, **kwargs):
+        return cls.registry[name](**kwargs) 
 
 
 @BackboneFactory.register("resnet34")

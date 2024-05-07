@@ -73,3 +73,7 @@ def decode_labels(encoded_labels, S, B, C, conf_th=0.0):
                 labels.append(box.unsqueeze(0))
 
     return torch.cat(labels, dim=0)
+
+
+def count_parameters(model: torch.nn.Module):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)

@@ -39,8 +39,9 @@ class InferenceConfig(BaseModel):
 class ModelConfig(BaseModel):
     backbone: str
     pretrained: bool
+    freeze_backbone: bool
     backbone_output_channels: int
-    detector_hidden_sz: int
+    detector_hidden_sizes: Tuple[int, ...]
     input_size: tuple
     conf_th: float
     S: int

@@ -13,8 +13,9 @@ data:
 model:
   backbone: resnet18
   pretrained: true
+  freeze_backbone: true
   backbone_output_channels: 512
-  detector_hidden_sz: 1024
+  detector_hidden_sizes: [1024, 512]
   input_size: [224, 224]
   S: 7
   B: 1

@@ -17,22 +17,26 @@ class YOLOv1(nn.Module):
         B = model_config.B
         C = model_config.nc
         output_channels = model_config.backbone_output_channels
-        detector_hidden_sz = model_config.detector_hidden_sz
+        detector_hidden_sizes = model_config.detector_hidden_sizes
 
         # unpooled backbone
         self.backbone = BackboneFactory.create_backbone(
             model_config.backbone,
-            output_channels=output_channels,
             pretrained=model_config.pretrained,
             num_classes=0,
-            global_pool="",
         )
 
+        if model_config.freeze_backbone:
+            for param in self.backbone.parameters():
+                param.requires_grad = False
+
         self.detector = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(output_channels * S * S, detector_hidden_sz),
+            nn.Linear(output_channels, detector_hidden_sizes[0]),
             nn.LeakyReLU(0.1),
-            nn.Linear(detector_hidden_sz, S * S * (B * 5 + C)),
+            nn.Linear(detector_hidden_sizes[0], detector_hidden_sizes[1]),
+            nn.LeakyReLU(0.1),
+            nn.Dropout(0.5),
+            nn.Linear(detector_hidden_sizes[1], S * S * (B * 5 + C)),
             nn.Unflatten(1, (S, S, B * 5 + C)),
         )
 
