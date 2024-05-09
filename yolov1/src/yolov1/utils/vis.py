@@ -59,24 +59,31 @@ def draw_boxes_pil(
     canvas = np.array(img)
     black, white = (0, 0, 0), (255, 255, 255)
     text_color = white if np.mean(color) < 128 else black
-    class_ids = labels[:, 0].to(torch.int32)
-    class_names = map(str, class_ids.tolist())
-    boxes = ncxcywh2xyxy(labels[:, 1:], *img.size)
 
-    for box, class_name in zip(boxes, class_names):
-        box_label = []
-        if show_class:
-            box_label.append(class_name)
-        if show_conf:
-            box_label.append("1.0")
+    if len(labels) > 0:
+        class_ids = labels[:, 0].to(torch.int32)
+        obj_confs = labels[:, 5] if len(labels[0]) > 4 else torch.ones_like(class_ids)
+        class_names = map(str, class_ids.tolist())
+        boxes = ncxcywh2xyxy(labels[:, 1:], *img.size)
 
-        canvas = draw_box(
-            canvas,
-            box,
-            " ".join(box_label),
-            color=color,
-            text_color=text_color,
-        )
+        for box, class_name, obj_conf in zip(
+            boxes,
+            class_names,
+            obj_confs,
+        ):
+            box_label = []
+            if show_class:
+                box_label.append(class_name)
+            if show_conf:
+                box_label.append(f"{obj_conf:.2f}")
+
+            canvas = draw_box(
+                canvas,
+                box,
+                " ".join(box_label),
+                color=color,
+                text_color=text_color,
+            )
 
     if display:
         plt.figure(figsize=(10, 10))

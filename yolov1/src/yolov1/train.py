@@ -25,28 +25,28 @@ def train(
         "total": 0.0,
         "coord": 0.0,
         "obj": 0.0,
-        "class": 0.0,
         "noobj": 0.0,
+        "class": 0.0,
     }
 
     for images, labels in dataloader:
         images = images.to(device)
         labels = labels.to(device)
 
-        optimizer.zero_grad()
-
         outputs = model(images)
 
-        loss, coord_loss, obj_loss, class_loss, noobj_loss = criterion(outputs, labels)
+        loss, coord_loss, obj_loss, noobj_loss, class_loss = criterion(outputs, labels)
 
+        # clear-fill-use
+        optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
 
         running_losses["total"] += loss.item()
         running_losses["coord"] += coord_loss.item()
         running_losses["obj"] += obj_loss.item()
-        running_losses["class"] += class_loss.item()
         running_losses["noobj"] += noobj_loss.item()
+        running_losses["class"] += class_loss.item()
 
     epoch_losses = {k: v / len(dataloader) for k, v in running_losses.items()}
 
@@ -62,8 +62,11 @@ def main(config: YOLOConfig):
     num_params = count_parameters(model)
     log.info(f"Loaded model successfully with {num_params} trainable params")
 
-    criterion = SimplifiedYOLOLossV2(config.model.nc)
-    optimizer = optim.Adam(model.parameters(), lr=cfg_train.learning_rate)
+    criterion = SimplifiedYOLOLossV2(config)
+    optimizer = optim.Adam(
+        model.parameters(),
+        **config.training.optim_kwargs,
+    )
 
     save_freq = cfg_train.save_freq
     last_epoch = cfg_train.epochs - 1

@@ -28,8 +28,16 @@ def infer(
         for images in dataloader:
             images = images.to(device)
             encoded_outputs = model(images)
-            decoded_outputs = [decode_labels(o, S, B, C)
-                               for o in encoded_outputs]
+            decoded_outputs = [
+                decode_labels(
+                    o,
+                    S,
+                    B,
+                    C,
+                    conf_th=config.inference.conf_th,
+                )
+                for o in encoded_outputs
+            ]
 
             results = {
                 "decoded_outputs": decoded_outputs,

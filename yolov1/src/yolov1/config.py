@@ -4,6 +4,13 @@ import yaml
 from pydantic import BaseModel
 
 
+class LossConfig(BaseModel):
+    l_coord: Optional[float] = 5.0
+    l_obj: Optional[float] = 1.0
+    l_noobj: Optional[float] = 0.5
+    l_class: Optional[float] = 1.0
+
+
 class AugmentationsConfig(BaseModel):
     horizontal_flip: Optional[float] = 0.5
     vertical_flip: Optional[float] = 0.0
@@ -22,18 +29,19 @@ class DataConfig(BaseModel):
 
 
 class TrainingConfig(BaseModel):
-    batch_size: int
-    num_workers: int
-    learning_rate: float
     epochs: int
+    dls_kwargs: Optional[dict] = {}
+    optim_kwargs: Optional[dict] = {}
     checkpoints_dir: str
     save_freq: int
+    loss: Optional[LossConfig] = LossConfig()
 
 
 class InferenceConfig(BaseModel):
-    batch_size: int
     checkpoint: str
     source: str
+    dls_kwargs: Optional[dict] = dict()
+    conf_th: float
 
 
 class ModelConfig(BaseModel):
@@ -43,7 +51,6 @@ class ModelConfig(BaseModel):
     backbone_output_channels: int
     detector_hidden_sizes: Tuple[int, ...]
     input_size: tuple
-    conf_th: float
     S: int
     B: int
     nc: int

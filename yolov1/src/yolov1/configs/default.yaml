@@ -11,7 +11,7 @@ data:
     random_crop_dims: [224, 224]
 
 model:
-  backbone: resnet18
+  backbone: resnet34
   pretrained: true
   freeze_backbone: true
   backbone_output_channels: 512
@@ -20,17 +20,31 @@ model:
   S: 7
   B: 1
   nc: 5
-  conf_th: 0.0
 
 training:
-  batch_size: 8
-  num_workers: 4
-  learning_rate: 0.001
-  epochs: 30
+  epochs: 100
   checkpoints_dir: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints"
-  save_freq: 10
+  save_freq: 20
+  dls_kwargs:
+    pin_memory: true
+    batch_size: 32
+    drop_last: true
+    num_workers: 2
+  optim_kwargs:
+    lr: 0.001
+    weight_decay: 0.0001
+  loss:
+    l_coord: 5.0
+    l_obj: 1.5
+    l_noobj: 0.5
+    l_class: 1.0
 
 inference:
-  batch_size: 2
+  conf_th: 0.4
+  dls_kwargs:
+    pin_memory: false
+    batch_size: 4
+    drop_last: false
+    num_workers: 2
   source: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/.data/valid/images"
   checkpoint: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints/final_epoch_50.pt"

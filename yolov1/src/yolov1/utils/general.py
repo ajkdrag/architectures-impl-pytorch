@@ -72,7 +72,9 @@ def decode_labels(encoded_labels, S, B, C, conf_th=0.0):
                 )
                 labels.append(box.unsqueeze(0))
 
-    return torch.cat(labels, dim=0)
+    if labels:
+        return torch.cat(labels, dim=0)
+    return torch.tensor([])
 
 
 def count_parameters(model: torch.nn.Module):
