@@ -22,6 +22,9 @@ class SimplifiedYOLOLossV2(nn.Module):
         target_conf = targets[..., 4].unsqueeze(-1)
         target_class = targets[..., 5:]
 
+        pred_boxes[..., 2:] = torch.sqrt(pred_boxes[..., 2:])
+        target_boxes[..., 2:] = torch.sqrt(target_boxes[..., 2:])
+
         obj_mask = target_conf.squeeze(-1) > 0
 
         coord_loss = self.lambda_coord * self.mse(
