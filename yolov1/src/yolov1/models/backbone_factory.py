@@ -15,7 +15,14 @@ class BackboneFactory:
 
     @classmethod
     def create_backbone(cls, name: str, **kwargs):
-        return cls.registry[name](**kwargs) 
+        return cls.registry[name](**kwargs)
+
+
+@BackboneFactory.register("resnet50")
+def resnet50(pretrained: bool = True, **kwargs):
+    model = timm.create_model("resnet50", pretrained=pretrained, **kwargs)
+    model.num_features = 2048
+    return model
 
 
 @BackboneFactory.register("resnet34")

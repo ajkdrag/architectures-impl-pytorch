@@ -27,7 +27,7 @@ def infer(
     with torch.no_grad():
         for images in dataloader:
             images = images.to(device)
-            encoded_outputs = model(images)
+            encoded_outputs = model(images).detach().cpu()
             decoded_outputs = [
                 decode_labels(
                     o,
@@ -48,7 +48,7 @@ def infer(
                 for image, output in zip(images, decoded_outputs):
                     results["drawn"].append(
                         draw_boxes_tensor(
-                            image,
+                            image.detach().cpu(),
                             output,
                             display=False,
                         ),
@@ -57,6 +57,7 @@ def infer(
 
 
 def main(config: YOLOConfig):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = YOLOv1(config.model)
     model.load_state_dict(
         torch.load(config.inference.checkpoint)["model_state_dict"],
@@ -64,7 +65,7 @@ def main(config: YOLOConfig):
     log.info("Model loaded successfully")
 
     inference_dl = get_dls_for_inference(config)
-    for outputs in infer(model, inference_dl, config):
+    for outputs in infer(model, inference_dl, config, device):
         yield outputs
 
 
