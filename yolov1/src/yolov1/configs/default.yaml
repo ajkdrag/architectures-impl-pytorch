@@ -1,38 +1,41 @@
 data:
   root: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/.data"
-  train: valid
+  train: train
   val: valid
   names: ['Ambulance', 'Bus', 'Car', 'Motorcycle', 'Truck']
   augmentations:
-    horizontal_flip: 0.8
-    vertical_flip: 0.0
-    brightness_contrast: 0.8
-    random_crop: 0.8
+    apply: true
+    horizontal_flip: 0.5
+    color_jitter: 1.0
+    shift_scale_rotate: 0.9
+    random_crop: 1.0
     random_crop_dims: [224, 224]
+    gaussian_noise: 0.25
 
 model:
-  backbone: resnet34
+  backbone: resnet18
   pretrained: true
-  freeze_backbone: true
-  backbone_output_channels: 512
-  detector_hidden_sizes: [1024, 512]
+  freeze_backbone: false
+  detector_hidden_sizes: [2048]
   input_size: [224, 224]
   S: 7
   B: 1
   nc: 5
 
 training:
-  epochs: 100
+  epochs: 300
   checkpoints_dir: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints"
-  save_freq: 20
+  save_freq: 50
+  val_freq: 10
   dls_kwargs:
     pin_memory: true
     batch_size: 32
     drop_last: true
     num_workers: 2
   optim_kwargs:
-    lr: 0.001
-    weight_decay: 0.0001
+    lr: 0.03
+    weight_decay: 0.0005
+    # momentum: 0.9
   loss:
     l_coord: 5.0
     l_obj: 1.5
@@ -47,4 +50,4 @@ inference:
     drop_last: false
     num_workers: 2
   source: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/.data/valid/images"
-  checkpoint: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints/final_epoch_50.pt"
+  checkpoint: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints/final_epoch_300.pt"

@@ -1,14 +1,17 @@
+from pathlib import Path
+from typing import Dict
+
 import structlog
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from pathlib import Path
+
 from yolov1.config import YOLOConfig
 from yolov1.data.utils import get_dls
+from yolov1.eval import validate
 from yolov1.models.arch import YOLOv1
-from yolov1.utils.loss import SimplifiedYOLOLossV2
 from yolov1.utils.general import count_parameters
-from typing import Dict
+from yolov1.utils.loss import SimplifiedYOLOLossV2
 
 log = structlog.get_logger()
 
@@ -35,7 +38,8 @@ def train(
 
         outputs = model(images)
 
-        loss, coord_loss, obj_loss, noobj_loss, class_loss = criterion(outputs, labels)
+        loss, coord_loss, obj_loss, noobj_loss, class_loss = criterion(
+            outputs, labels)
 
         # clear-fill-use
         optimizer.zero_grad(set_to_none=True)
@@ -58,6 +62,8 @@ def main(config: YOLOConfig):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     train_dl = get_dls(config, mode="train")
+    val_dl = get_dls(config, mode="valid")
+
     model = YOLOv1(config.model).to(device)
     num_params = count_parameters(model)
     log.info(f"Loaded model successfully with {num_params} trainable params")
@@ -69,21 +75,34 @@ def main(config: YOLOConfig):
     )
 
     save_freq = cfg_train.save_freq
-    last_epoch = cfg_train.epochs - 1
+    val_freq = cfg_train.val_freq
+    epochs = cfg_train.epochs
 
-    for epoch in range(cfg_train.epochs):
-        epoch_loss = train(model, train_dl, optimizer, criterion, device)
-        log.info(f"Epoch [{epoch+1}/{cfg_train.epochs}], Train Loss: {epoch_loss}")
+    for epoch in range(1, epochs + 1):
+        # train
+        epoch_losses = train(model, train_dl, optimizer, criterion, device)
+        log.info(f"[{epoch}/{epochs}] Train Loss: {epoch_losses}")
+
+        # eval
+        if epoch % val_freq == 0:
+            val_losses, val_metrics = validate(
+                model, val_dl, criterion, device, metrics=None
+            )
+            log.info(
+                f"[{epoch}/{epochs}] Val Loss: {val_losses}, Val Metrics: {val_metrics}"
+            )
 
         checkpoint = {
             "epoch": epoch,
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
         }
+
         Path(cfg_train.checkpoints_dir).mkdir(parents=True, exist_ok=True)
-        checkpoint_file = f"epoch_{epoch+1}.pt"
-        if epoch == last_epoch:
+        checkpoint_file = f"epoch_{epoch}.pt"
+        if epoch == epochs:
             checkpoint_file = f"final_{checkpoint_file}"
 
-        if (epoch % save_freq == 0) or epoch == last_epoch:
-            torch.save(checkpoint, f"{cfg_train.checkpoints_dir}/{checkpoint_file}")
+        if (epoch % save_freq == 0) or epoch == epochs:
+            torch.save(
+                checkpoint, f"{cfg_train.checkpoints_dir}/{checkpoint_file}")

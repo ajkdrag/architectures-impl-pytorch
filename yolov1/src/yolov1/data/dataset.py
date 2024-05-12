@@ -28,19 +28,16 @@ class YOLODataset(torch.utils.data.Dataset):
     image_files: List[Path]
     label_files: List[Path]
     encode: bool
-    apply_aug: bool
 
     def __init__(
         self,
         config: YOLOConfig,
         mode="train",
         encode=True,
-        apply_aug=True,
     ):
         self.config = config
         self.mode = mode
         self.encode = encode
-        self.apply_aug = apply_aug
         self.transforms = create_transforms(config)
         self.augmentations = (
             create_augmentation_pipeline(config) if mode == "train" else None
@@ -75,6 +72,7 @@ class YOLODataset(torch.utils.data.Dataset):
         label_path = self.label_files[index]
 
         image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         with open(label_path, "r") as f:
             labels = f.read().strip().split("\n")
@@ -83,7 +81,7 @@ class YOLODataset(torch.utils.data.Dataset):
 
         boxes, class_labels = labels[:, 1:], labels[:, 0]
 
-        if self.apply_aug and self.augmentations:
+        if self.config.data.augmentations.apply and self.augmentations:
             image, boxes, class_labels = apply_pipeline(
                 self.augmentations,
                 image,

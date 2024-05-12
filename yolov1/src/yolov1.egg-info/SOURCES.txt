@@ -2,6 +2,7 @@ pyproject.toml
 src/yolov1/__init__.py
 src/yolov1/config.py
 src/yolov1/detect.py
+src/yolov1/eval.py
 src/yolov1/train.py
 src/yolov1.egg-info/PKG-INFO
 src/yolov1.egg-info/SOURCES.txt

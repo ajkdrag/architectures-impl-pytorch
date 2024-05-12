@@ -1,5 +1,6 @@
-import torch
 import albumentations as A
+import cv2
+import torch
 from albumentations.pytorch import ToTensorV2
 from yolov1.config import AugmentationsConfig, YOLOConfig
 
@@ -11,15 +12,43 @@ def create_augmentation_pipeline(config: YOLOConfig):
     if config.horizontal_flip > 0:
         pipeline.append(A.HorizontalFlip(p=config.horizontal_flip))
 
-    if config.brightness_contrast > 0:
-        pipeline.append(A.RandomBrightnessContrast(
-            p=config.brightness_contrast))
+    if config.color_jitter > 0:
+        pipeline.append(
+            A.ColorJitter(
+                brightness=0.5,
+                contrast=0.5,
+                saturation=0.6,
+                hue=0.1,
+                p=config.color_jitter,
+            )
+        )
 
     if config.random_crop > 0:
         pipeline.append(
-            A.RandomResizedCrop(
+            A.RandomSizedBBoxSafeCrop(
+                *config.random_crop_dims,
                 p=config.random_crop,
-                size=config.random_crop_dims,
+                erosion_rate=0.3,
+            )
+        )
+
+    if config.shift_scale_rotate > 0:
+        pipeline.append(
+            A.ShiftScaleRotate(
+                shift_limit=[-0.2, 0.2],
+                scale_limit=[-0.5, 0.2],
+                rotate_limit=[-10, 10],
+                border_mode=cv2.BORDER_CONSTANT,
+                value=[int(v * 255.0) for v in [0.485, 0.456, 0.406]],
+                p=config.shift_scale_rotate,
+            )
+        )
+
+    if config.gaussian_noise > 0:
+        pipeline.append(
+            A.GaussNoise(
+                var_limit=(10.0, 50.0),
+                p=config.gaussian_noise,
             )
         )
 

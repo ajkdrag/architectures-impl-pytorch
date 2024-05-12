@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 from yolov1.config import YOLOConfig
 
@@ -22,8 +21,14 @@ class SimplifiedYOLOLossV2(nn.Module):
         target_conf = targets[..., 4].unsqueeze(-1)
         target_class = targets[..., 5:]
 
-        pred_boxes[..., 2:] = torch.sqrt(pred_boxes[..., 2:])
-        target_boxes[..., 2:] = torch.sqrt(target_boxes[..., 2:])
+        # pred_boxes_wh = pred_boxes[..., 2:].clone()
+        # pred_boxes_wh = torch.sqrt(
+        #     torch.abs(pred_boxes_wh)) * torch.sign(pred_boxes_wh)
+        # pred_boxes = torch.cat(
+        #     (pred_boxes[..., :2], pred_boxes_wh),
+        #     dim=-1,
+        # )
+        # target_boxes[..., 2:] = torch.sqrt(target_boxes[..., 2:])
 
         obj_mask = target_conf.squeeze(-1) > 0
 

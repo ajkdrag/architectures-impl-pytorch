@@ -1,10 +1,10 @@
 from torch.utils.data import DataLoader
 from yolov1.config import YOLOConfig
-from yolov1.data.dataset import YOLODataset, InferenceDataset
+from yolov1.data.dataset import InferenceDataset, YOLODataset
 
 
 def get_dls(config: YOLOConfig, mode="train"):
-    dataset = YOLODataset(config, mode=mode, apply_aug=True)
+    dataset = YOLODataset(config, mode=mode)
     dataloader = DataLoader(
         dataset,
         shuffle=True if mode == "train" else False,

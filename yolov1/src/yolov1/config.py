@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple
+from typing import List, Optional
 
 import yaml
 from pydantic import BaseModel
@@ -12,12 +12,13 @@ class LossConfig(BaseModel):
 
 
 class AugmentationsConfig(BaseModel):
+    apply: Optional[bool] = True
     horizontal_flip: Optional[float] = 0.5
-    vertical_flip: Optional[float] = 0.0
-    brightness_contrast: Optional[float] = 0.8
+    color_jitter: Optional[float] = 0.5
     shift_scale_rotate: Optional[float] = 0.0
     random_crop: Optional[float] = 0.6
-    random_crop_dims: Tuple[float, float]
+    random_crop_dims: tuple[float, float]
+    gaussian_noise: Optional[float] = 0.5
 
 
 class DataConfig(BaseModel):
@@ -34,6 +35,7 @@ class TrainingConfig(BaseModel):
     optim_kwargs: Optional[dict] = {}
     checkpoints_dir: str
     save_freq: int
+    val_freq: int
     loss: Optional[LossConfig] = LossConfig()
 
 
@@ -48,8 +50,7 @@ class ModelConfig(BaseModel):
     backbone: str
     pretrained: bool
     freeze_backbone: bool
-    backbone_output_channels: int
-    detector_hidden_sizes: Tuple[int, ...]
+    detector_hidden_sizes: tuple[int, ...]
     input_size: tuple
     S: int
     B: int
