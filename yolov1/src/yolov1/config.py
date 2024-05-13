@@ -50,7 +50,7 @@ class ModelConfig(BaseModel):
     backbone: str
     pretrained: bool
     freeze_backbone: bool
-    detector_hidden_sizes: Tuple[int, ...]
+    conv_block_channels: Tuple[int, ...]
     input_size: Tuple[int, int]
     S: int
     B: int
@@ -62,6 +62,7 @@ class YOLOConfig(BaseModel):
     training: TrainingConfig
     inference: InferenceConfig
     model: ModelConfig
+    lr: float
 
 
 def parse_config(config_file):

@@ -1,4 +1,16 @@
 import torch
+import torch.nn as nn
+
+
+def compile_model(model: nn.Module, device, train_dl):
+    model.to(torch.device(device))
+    model = torch.compile(model)
+
+    for images, _ in train_dl:
+        model.train()
+        _ = model(images.to(torch.device(device)))
+        break
+    return model
 
 
 def ncxcywh2xyxy(tensor, width: int, height: int):

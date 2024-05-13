@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 from yolov1.config import YOLOConfig
 from yolov1.data.utils import get_dls_for_inference
-from yolov1.models.arch import YOLOv2 as YOLOv1
+from yolov1.models.arch import YOLOv1
 from yolov1.utils.general import decode_labels
 from yolov1.utils.vis import draw_boxes_tensor
 
@@ -59,9 +59,9 @@ def infer(
 def main(config: YOLOConfig):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = YOLOv1(config.model)
-    model.load_state_dict(
-        torch.load(config.inference.checkpoint)["model_state_dict"],
-    )
+    state_dict = torch.load(config.inference.checkpoint)["state_dict"]
+    state_dict = {k.replace("model._orig_mod.", ""): v for k, v in state_dict.items()}
+    model.load_state_dict(state_dict)
     log.info("Model loaded successfully")
 
     inference_dl = get_dls_for_inference(config)

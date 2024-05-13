@@ -16,6 +16,8 @@ dependencies = [
     "albumentations>=1.4.6",
     "torchvision>=0.18.0",
     "torchsummary>=1.5.1",
+    "lightning>=2.2.4",
+    "torchmetrics[detection]>=1.4.0",
 ]
 requires-python = "==3.9.*"
 readme = "README.md"

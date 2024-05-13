@@ -13,6 +13,9 @@ src/yolov1/data/dataset.py
 src/yolov1/data/utils.py
 src/yolov1/models/arch.py
 src/yolov1/models/backbone_factory.py
+src/yolov1/models/blocks.py
+src/yolov1/models/model.py
+src/yolov1/utils/constants.py
 src/yolov1/utils/general.py
 src/yolov1/utils/io.py
 src/yolov1/utils/loss.py

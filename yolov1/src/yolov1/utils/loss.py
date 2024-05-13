@@ -2,7 +2,7 @@ import torch.nn as nn
 from yolov1.config import YOLOConfig
 
 
-class SimplifiedYOLOLossV2(nn.Module):
+class SimplifiedYOLOLoss(nn.Module):
     def __init__(self, config: YOLOConfig):
         super().__init__()
         self.num_classes = config.model.nc
