@@ -22,22 +22,22 @@ class BackboneFactory:
 @BackboneFactory.register("resnet50")
 def resnet50(pretrained: bool = True, **kwargs):
     model = timm.create_model("resnet50", pretrained=pretrained, **kwargs)
-    model.num_features = 2048
-    model.scale_down_factor = 32
+    model.num_features = model.feature_info[-1]["num_chs"]
+    model.scale_down_factor = model.feature_info[-1]["reduction"]
     return model
 
 
 @BackboneFactory.register("resnet34")
 def resnet34(pretrained: bool = True, **kwargs):
     model = timm.create_model("resnet34", pretrained=pretrained, **kwargs)
-    model.num_features = 512
-    model.scale_down_factor = 32
+    model.num_features = model.feature_info[-1]["num_chs"]
+    model.scale_down_factor = model.feature_info[-1]["reduction"]
     return model
 
 
 @BackboneFactory.register("resnet18")
 def resnet18(pretrained: bool = True, **kwargs):
     model = timm.create_model("resnet18", pretrained=pretrained, **kwargs)
-    model.num_features = 512
-    model.scale_down_factor = 32
+    model.num_features = model.feature_info[-1]["num_chs"]
+    model.scale_down_factor = model.feature_info[-1]["reduction"]
     return model

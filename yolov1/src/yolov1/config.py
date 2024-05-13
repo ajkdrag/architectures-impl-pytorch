@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import yaml
 from pydantic import BaseModel
@@ -17,7 +17,7 @@ class AugmentationsConfig(BaseModel):
     color_jitter: Optional[float] = 0.5
     shift_scale_rotate: Optional[float] = 0.0
     random_crop: Optional[float] = 0.6
-    random_crop_dims: tuple[float, float]
+    random_crop_dims: Tuple[float, float]
     gaussian_noise: Optional[float] = 0.5
 
 
@@ -50,8 +50,8 @@ class ModelConfig(BaseModel):
     backbone: str
     pretrained: bool
     freeze_backbone: bool
-    detector_hidden_sizes: tuple[int, ...]
-    input_size: tuple
+    detector_hidden_sizes: Tuple[int, ...]
+    input_size: Tuple[int, int]
     S: int
     B: int
     nc: int

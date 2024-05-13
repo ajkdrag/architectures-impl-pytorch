@@ -26,7 +26,7 @@ license = {text = "MIT"}
 distribution = false
 
 [tool.pdm.scripts]
-nb = "jupyter-lab --no-browser --ip=0.0.0.0 --port=8888 --NotebookApp.token=''"
+nb = "jupyter-lab --no-browser --ip=0.0.0.0 --port=8001 --NotebookApp.token=''"
 
 [tool.pdm.dev-dependencies]
 dev = [

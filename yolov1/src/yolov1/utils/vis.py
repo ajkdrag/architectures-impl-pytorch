@@ -1,10 +1,10 @@
 from typing import Tuple
-from PIL import Image
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from PIL import Image
 from torchvision.transforms.functional import to_pil_image
 from yolov1.utils.general import ncxcywh2xyxy
 
@@ -62,7 +62,7 @@ def draw_boxes_pil(
 
     if len(labels) > 0:
         class_ids = labels[:, 0].to(torch.int32)
-        obj_confs = labels[:, 5] if len(labels[0]) > 4 else torch.ones_like(class_ids)
+        obj_confs = labels[:, 5] if len(labels[0]) > 5 else torch.ones_like(class_ids)
         class_names = map(str, class_ids.tolist())
         boxes = ncxcywh2xyxy(labels[:, 1:], *img.size)
 
@@ -86,7 +86,7 @@ def draw_boxes_pil(
             )
 
     if display:
-        plt.figure(figsize=(10, 10))
+        plt.figure(figsize=(5, 5))
         plt.axis("off")
         plt.imshow(canvas)
         return None

@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 from yolov1.config import YOLOConfig
 from yolov1.data.utils import get_dls_for_inference
-from yolov1.models.arch import YOLOv1
+from yolov1.models.arch import YOLOv2 as YOLOv1
 from yolov1.utils.general import decode_labels
 from yolov1.utils.vis import draw_boxes_tensor
 

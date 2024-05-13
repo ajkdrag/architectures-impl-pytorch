@@ -9,21 +9,21 @@ data:
     color_jitter: 1.0
     shift_scale_rotate: 0.9
     random_crop: 1.0
-    random_crop_dims: [224, 224]
-    gaussian_noise: 0.25
+    random_crop_dims: [448, 448]
+    gaussian_noise: 0.2
 
 model:
   backbone: resnet18
   pretrained: true
   freeze_backbone: false
-  detector_hidden_sizes: [2048]
-  input_size: [224, 224]
+  detector_hidden_sizes: [512]
+  input_size: [448, 448]
   S: 7
   B: 1
   nc: 5
 
 training:
-  epochs: 300
+  epochs: 150
   checkpoints_dir: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints"
   save_freq: 50
   val_freq: 10
@@ -33,14 +33,14 @@ training:
     drop_last: true
     num_workers: 2
   optim_kwargs:
-    lr: 0.03
+    lr: 0.001
     weight_decay: 0.0005
-    # momentum: 0.9
+    momentum: 0.9
   loss:
-    l_coord: 5.0
-    l_obj: 1.5
+    l_coord: 7.0
+    l_obj: 2.0
     l_noobj: 0.5
-    l_class: 1.0
+    l_class: 5.0
 
 inference:
   conf_th: 0.4
@@ -50,4 +50,4 @@ inference:
     drop_last: false
     num_workers: 2
   source: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/.data/valid/images"
-  checkpoint: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints/final_epoch_300.pt"
+  checkpoint: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints/final_epoch_200.pt"

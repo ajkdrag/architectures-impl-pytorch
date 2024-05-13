@@ -46,5 +46,5 @@ dist/**
 .data/
 datasets/
 checkpoints/
-.ipynb_checkpoints/
+**/.ipynb_checkpoints/**
 .pdm-python

@@ -50,12 +50,11 @@ class YOLODataset(torch.utils.data.Dataset):
         )
         path_data = Path(self.config.data.root).joinpath(subdir)
         self.image_files = sorted(get_all_files(path_data.joinpath("images")))
-        self.label_files = sorted(
-            get_all_files(
-                path_data.joinpath("labels"),
-                exts=[".txt"],
-            )
-        )
+        self.label_files = [
+            path_data.joinpath("labels", f.name).with_suffix(".txt")
+            for f in self.image_files
+        ]
+
         if len(self.image_files) != len(self.label_files):
             log.error(
                 f"#Images {len(self.image_files)} != #Labels {len(self.label_files)}"
@@ -89,8 +88,7 @@ class YOLODataset(torch.utils.data.Dataset):
                 class_labels,
             )
 
-        transformed_labels = torch.cat(
-            [class_labels.unsqueeze(1), boxes], dim=1)
+        transformed_labels = torch.cat([class_labels.unsqueeze(1), boxes], dim=1)
 
         if self.encode:
             image, boxes, class_labels = apply_pipeline(
@@ -119,8 +117,7 @@ class InferenceDataset(YOLODataset):
 
     def __getitem__(self, index):
         image_path = self.image_files[index]
-        image = np.array(Image.open(image_path).convert(
-            "RGB"), dtype=np.float32)
+        image = np.array(Image.open(image_path).convert("RGB"), dtype=np.float32)
         return apply_pipeline(
             self.transforms,
             image,

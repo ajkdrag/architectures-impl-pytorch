@@ -13,6 +13,7 @@ class SimplifiedYOLOLossV2(nn.Module):
         self.mse = nn.MSELoss(reduction="sum")
 
     def forward(self, predictions, targets):
+        N = targets.size()[0]
         pred_boxes = predictions[..., :4]
         pred_conf = predictions[..., 4].unsqueeze(-1)
         pred_class = predictions[..., 5:]
@@ -20,15 +21,6 @@ class SimplifiedYOLOLossV2(nn.Module):
         target_boxes = targets[..., :4]
         target_conf = targets[..., 4].unsqueeze(-1)
         target_class = targets[..., 5:]
-
-        # pred_boxes_wh = pred_boxes[..., 2:].clone()
-        # pred_boxes_wh = torch.sqrt(
-        #     torch.abs(pred_boxes_wh)) * torch.sign(pred_boxes_wh)
-        # pred_boxes = torch.cat(
-        #     (pred_boxes[..., :2], pred_boxes_wh),
-        #     dim=-1,
-        # )
-        # target_boxes[..., 2:] = torch.sqrt(target_boxes[..., 2:])
 
         obj_mask = target_conf.squeeze(-1) > 0
 
@@ -55,7 +47,7 @@ class SimplifiedYOLOLossV2(nn.Module):
         total_loss = coord_loss + obj_loss + noobj_loss + class_loss
 
         return (
-            total_loss,
+            total_loss / N,
             coord_loss,
             obj_loss,
             noobj_loss,

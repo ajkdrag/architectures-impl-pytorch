@@ -28,7 +28,9 @@ def encode_labels(labels: torch.Tensor, S, B, C) -> torch.Tensor:
         i, j = int(S * y), int(S * x)
         x_cell, y_cell = S * x - j, S * y - i
 
-        encoded_labels[i, j, 0:4] = torch.tensor([x_cell, y_cell, w, h])
+        encoded_labels[i, j, 0:4] = torch.tensor(
+            [x_cell, y_cell, torch.sqrt(w), torch.sqrt(h)]
+        )
         # Object conf set to 1 for simplificty (replace with IoU)
         encoded_labels[i, j, 4] = 1
 
@@ -51,8 +53,8 @@ def decode_labels(encoded_labels, S, B, C, conf_th=0.0):
             x_cell, y_cell, w_cell, h_cell = bbox
             x = (j + x_cell) / S
             y = (i + y_cell) / S
-            w = w_cell
-            h = h_cell
+            w = w_cell**2
+            h = h_cell**2
             cx, cy = x + w * 0.5, y + h * 0.5
 
             class_idx = torch.argmax(class_probs)
