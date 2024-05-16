@@ -1,13 +1,12 @@
-import torch
 import torch.nn as nn
 import torch.optim as optim
 from lightning import LightningModule
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import StepLR
 from torchmetrics.detection import MeanAveragePrecision
 from yolov1.config import YOLOConfig
-from yolov1.models.arch import YOLOv1
+from yolov1.models.arch_v0 import YOLOv1
 from yolov1.utils.general import decode_labels
-from yolov1.utils.loss import SimplifiedYOLOLoss
+from yolov1.utils.loss import YOLOLoss as SimplifiedYOLOLoss
 
 
 class YOLOv1LightningModel(LightningModule):
@@ -25,7 +24,6 @@ class YOLOv1LightningModel(LightningModule):
             iou_type="bbox",
             iou_thresholds=[0.5],
             extended_summary=False,
-            average="macro",
             backend="faster_coco_eval",
         )
 
@@ -48,30 +46,33 @@ class YOLOv1LightningModel(LightningModule):
 
         # Decode the labels and predictions
         S, B, C = self.hparams.model.S, self.hparams.model.B, self.hparams.model.nc
-        decoded_labels = torch.cat([decode_labels(label, S, B, C) for label in labels])
-        decoded_preds = torch.cat(
-            [decode_labels(o, S, B, C) for o in outputs.detach().cpu()]
-        )
-        print(decoded_preds.shape, decoded_labels.shape)
+        decoded_labels = [decode_labels(label, S, B, C) for label in labels]
+        decoded_preds = [decode_labels(o, S, B, C) for o in outputs]
+
         preds = [
             dict(
-                boxes=decoded_preds[..., 1:5],
-                scores=decoded_preds[..., 5:6],
-                labels=decoded_preds[..., 0:1],
+                boxes=item[..., 1:5],
+                scores=item[..., 5],
+                labels=item[..., 0].int(),
             )
+            for item in decoded_preds
         ]
         targets = [
             dict(
-                boxes=decoded_labels[..., 1:5],
-                labels=decoded_preds[..., 0:1],
+                boxes=item[..., 1:5],
+                labels=item[..., 0].int(),
             )
+            for item in decoded_labels
         ]
 
-        # Update the MeanAveragePrecision metric
         self.map_metric.update(preds, targets)
-        self.log("mAP", self.map_metric, prog_bar=True)
+        self.log(
+            "val_mAP",
+            self.map_metric["map"],
+            prog_bar=True,
+            metric_attribute="map",
+        )
         self.log("val_loss", loss, prog_bar=True)
-        return loss
 
     def on_validation_epoch_end(self):
         lr = self.trainer.lr_scheduler_configs[0].scheduler.get_last_lr()[0]
@@ -85,10 +86,10 @@ class YOLOv1LightningModel(LightningModule):
             **self.hparams.training.optim_kwargs,
         )
         scheduler = {
-            "scheduler": ReduceLROnPlateau(
+            "scheduler": StepLR(
                 optimizer,
-                factor=0.5,
-                min_lr=0.000003,
+                step_size=20,
+                gamma=0.25,
             ),
             "name": "lr_scheduler",
             "monitor": "val_loss",

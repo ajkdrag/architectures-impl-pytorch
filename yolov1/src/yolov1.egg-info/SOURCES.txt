@@ -12,6 +12,7 @@ src/yolov1/data/augmentations.py
 src/yolov1/data/dataset.py
 src/yolov1/data/utils.py
 src/yolov1/models/arch.py
+src/yolov1/models/arch_v0.py
 src/yolov1/models/backbone_factory.py
 src/yolov1/models/blocks.py
 src/yolov1/models/model.py

@@ -3,13 +3,14 @@ data:
   train: train
   val: valid
   names: ['Ambulance', 'Bus', 'Car', 'Motorcycle', 'Truck']
+  class_weights: [0.40, 0.24, 0.12, 0.36, 0.32]
   augmentations:
     apply: true
     horizontal_flip: 0.5
     color_jitter: 1.0
     shift_scale_rotate: 0.9
-    random_crop: 1.0
-    random_crop_dims: [224, 224]
+    random_crop: 0.9
+    random_crop_dims: [448, 448]
     gaussian_noise: 0.2
 
 model:
@@ -17,16 +18,17 @@ model:
   pretrained: true
   freeze_backbone: true
   conv_block_channels: [256]
-  input_size: [224, 224]
+  detector_hidden_sz: 256
+  input_size: [448, 448]
   S: 7
-  B: 1
+  B: 2
   nc: 5
 
 training:
-  epochs: 10
+  epochs: 40
   checkpoints_dir: "/home/ajkdrag/workspace/projects/architectures-impl-pytorch/checkpoints"
-  save_freq: 5
-  val_freq: 5
+  save_freq: 20
+  val_freq: 1
   dls_kwargs:
     pin_memory: true
     batch_size: 32
@@ -38,11 +40,11 @@ training:
   loss:
     l_coord: 7.0
     l_obj: 2.0
-    l_noobj: 0.5
-    l_class: 5.0
+    l_noobj: 2.0
+    l_class: 1.5
 
 inference:
-  conf_th: 0.4
+  prob_th: 0.1
   dls_kwargs:
     pin_memory: false
     batch_size: 4

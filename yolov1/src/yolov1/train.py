@@ -22,9 +22,11 @@ def main(config: YOLOConfig):
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=config.training.checkpoints_dir,
-        filename="epoch_{epoch:02d}",
-        every_n_epochs=config.training.save_freq,
+        filename="epoch_{epoch:02d}_{val_mAP:.2f}",
+        save_top_k=1,
         save_last=True,
+        monitor="val_mAP",
+        mode="max",
     )
 
     trainer = pl.Trainer(
@@ -33,7 +35,8 @@ def main(config: YOLOConfig):
         default_root_dir=config.training.checkpoints_dir,
         accelerator="gpu",
         precision="16",
-        # log_every_n_steps=20,
+        check_val_every_n_epoch=config.training.val_freq,
+        log_every_n_steps=1,
     )
 
     trainer.fit(pl_model, train_dl, val_dl)

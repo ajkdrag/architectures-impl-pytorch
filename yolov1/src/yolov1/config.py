@@ -26,6 +26,7 @@ class DataConfig(BaseModel):
     train: str
     val: str
     names: List[str]
+    class_weights: Optional[List[float]] = None
     augmentations: AugmentationsConfig
 
 
@@ -43,7 +44,7 @@ class InferenceConfig(BaseModel):
     checkpoint: str
     source: str
     dls_kwargs: Optional[dict] = dict()
-    conf_th: float
+    prob_th: float
 
 
 class ModelConfig(BaseModel):
@@ -51,6 +52,7 @@ class ModelConfig(BaseModel):
     pretrained: bool
     freeze_backbone: bool
     conv_block_channels: Tuple[int, ...]
+    detector_hidden_sz: int
     input_size: Tuple[int, int]
     S: int
     B: int

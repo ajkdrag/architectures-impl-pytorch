@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 from yolov1.config import YOLOConfig
 from yolov1.data.utils import get_dls_for_inference
-from yolov1.models.arch import YOLOv1
+from yolov1.models.model import YOLOv1LightningModel
 from yolov1.utils.general import decode_labels
 from yolov1.utils.vis import draw_boxes_tensor
 
@@ -27,15 +27,17 @@ def infer(
     with torch.no_grad():
         for images in dataloader:
             images = images.to(device)
-            encoded_outputs = model(images).detach().cpu()
+            encoded_outputs = model(images)
             decoded_outputs = [
                 decode_labels(
                     o,
                     S,
                     B,
                     C,
-                    conf_th=config.inference.conf_th,
+                    prob_th=config.inference.prob_th,
                 )
+                .detach()
+                .cpu()
                 for o in encoded_outputs
             ]
 
@@ -58,10 +60,9 @@ def infer(
 
 def main(config: YOLOConfig):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = YOLOv1(config.model)
-    state_dict = torch.load(config.inference.checkpoint)["state_dict"]
-    state_dict = {k.replace("model._orig_mod.", ""): v for k, v in state_dict.items()}
-    model.load_state_dict(state_dict)
+    model = YOLOv1LightningModel.load_from_checkpoint(
+        config.inference.checkpoint, config=config
+    )
     log.info("Model loaded successfully")
 
     inference_dl = get_dls_for_inference(config)

@@ -2,10 +2,8 @@ from pathlib import Path
 from typing import List
 
 import cv2
-import numpy as np
 import structlog
 import torch
-from PIL import Image
 from yolov1.config import (
     YOLOConfig,
 )
@@ -27,7 +25,10 @@ class YOLODataset(torch.utils.data.Dataset):
     mode: str
     image_files: List[Path]
     label_files: List[Path]
+    class_weights: List[float]
+    sample_weights: List[float] = None
     encode: bool
+    nc: int
 
     def __init__(
         self,
@@ -38,11 +39,34 @@ class YOLODataset(torch.utils.data.Dataset):
         self.config = config
         self.mode = mode
         self.encode = encode
+        self.class_weights = config.data.class_weights
+        self.nc = len(config.data.names)
         self.transforms = create_transforms(config)
         self.augmentations = (
             create_augmentation_pipeline(config) if mode == "train" else None
         )
         self.get_data()
+        self._set_class_weights()
+        self._set_sample_weights()
+
+    def _set_class_weights(self):
+        if self.class_weights is None:
+            # +1 for the background class
+            self.class_weights = [1 / (self.nc + 1)] * self.nc
+        log.info("Class weights: {}".format(self.class_weights))
+
+    def _set_sample_weights(self):
+        # for weighted random sampling
+        background_cls_weight = 1 / (self.nc + 1)
+        if self.sample_weights is None:
+            self.sample_weights = [background_cls_weight] * len(self.image_files)
+            for idx in range(len(self.image_files)):
+                _, class_labels = self._read_label(idx)
+                if len(class_labels) == 0:
+                    continue
+                majority_class = torch.mode(class_labels, 0).values.item()
+                class_weight = self.class_weights[int(majority_class)]
+                self.sample_weights[idx] = class_weight
 
     def get_data(self):
         subdir = (
@@ -63,22 +87,24 @@ class YOLODataset(torch.utils.data.Dataset):
 
         log.info("Loaded {} samples".format(len(self.image_files)))
 
+    def _read_label(self, index):
+        label_path = self.label_files[index]
+        with open(label_path, "r") as f:
+            labels = f.read().strip().split("\n")
+            labels = [list(map(float, label.split())) for label in labels]
+            labels = torch.tensor(labels, dtype=torch.float32)
+        boxes, class_labels = labels[:, 1:], labels[:, 0]
+        return boxes, class_labels
+
     def __len__(self):
         return len(self.image_files)
 
     def __getitem__(self, index):
         image_path = self.image_files[index]
-        label_path = self.label_files[index]
-
         image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        with open(label_path, "r") as f:
-            labels = f.read().strip().split("\n")
-            labels = [list(map(float, label.split())) for label in labels]
-            labels = torch.tensor(labels)
-
-        boxes, class_labels = labels[:, 1:], labels[:, 0]
+        boxes, class_labels = self._read_label(index)
 
         if self.config.data.augmentations.apply and self.augmentations:
             image, boxes, class_labels = apply_pipeline(
@@ -101,8 +127,8 @@ class YOLODataset(torch.utils.data.Dataset):
             transformed_labels = encode_labels(
                 torch.cat([class_labels.unsqueeze(1), boxes], dim=1),
                 S=self.config.model.S,
-                C=self.config.model.nc,
                 B=self.config.model.B,
+                C=self.config.model.nc,
             )
 
         return image, transformed_labels
@@ -115,9 +141,14 @@ class InferenceDataset(YOLODataset):
     ):
         super().__init__(config, mode="test")
 
+    def _set_sample_weights(self):
+        pass
+
     def __getitem__(self, index):
         image_path = self.image_files[index]
-        image = np.array(Image.open(image_path).convert("RGB"), dtype=np.float32)
+        image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         return apply_pipeline(
             self.transforms,
             image,

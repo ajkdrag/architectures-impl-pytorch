@@ -53,7 +53,7 @@ def draw_boxes_pil(
     labels: torch.Tensor,
     color: Tuple[int, int, int] = (255, 0, 0),
     show_class: bool = True,
-    show_conf: bool = True,
+    show_prob: bool = True,
     display: bool = True,
 ):
     canvas = np.array(img)
@@ -63,19 +63,21 @@ def draw_boxes_pil(
     if len(labels) > 0:
         class_ids = labels[:, 0].to(torch.int32)
         obj_confs = labels[:, 5] if len(labels[0]) > 5 else torch.ones_like(class_ids)
+        class_probs = labels[:, 6] if len(labels[0]) > 6 else torch.ones_like(class_ids)
         class_names = map(str, class_ids.tolist())
         boxes = ncxcywh2xyxy(labels[:, 1:], *img.size)
 
-        for box, class_name, obj_conf in zip(
+        for box, class_name, obj_conf, class_prob in zip(
             boxes,
             class_names,
             obj_confs,
+            class_probs,
         ):
             box_label = []
             if show_class:
                 box_label.append(class_name)
-            if show_conf:
-                box_label.append(f"{obj_conf:.2f}")
+            if show_prob:
+                box_label.append(f"{obj_conf*class_prob:.2f}")
 
             canvas = draw_box(
                 canvas,
